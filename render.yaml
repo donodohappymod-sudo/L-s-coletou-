@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: loscollector
+    runtime: docker
+    plan: free
+    healthCheckPath: /_stcore/health
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false
+      - key: TMDB_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATA_DIR
+        value: data
+      - key: MEDIA_DIR
+        value: media
+      - key: COLLECTOR_MAX_PAGES
+        value: "30"
+      - key: COLLECTOR_TIMEOUT
+        value: "12"
+      - key: STREAM_TIMEOUT
+        value: "8"
+      - key: MONITOR_DEFAULT_INTERVAL_MINUTES
+        value: "1440"
+
+  # Render Cron Jobs are paid services. This runs the server-side monitor
+  # every 30 minutes without depending on Safari being open.
+  - type: cron
+    name: loscollector-monitor
+    runtime: docker
+    plan: 0.5c-512mb
+    schedule: "*/30 * * * *"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: "python scheduler.py"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DATA_DIR
+        value: data
+      - key: MEDIA_DIR
+        value: media
+      - key: COLLECTOR_MAX_PAGES
+        value: "30"
+      - key: COLLECTOR_TIMEOUT
+        value: "12"
+      - key: STREAM_TIMEOUT
+        value: "8"
